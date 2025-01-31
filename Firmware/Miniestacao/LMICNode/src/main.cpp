@@ -27,6 +27,18 @@ LMICNode node;
 // Buffer para armazenar a mensagem formatada
 char message[100] = "";
 
+// Definições da UART
+#define UART_ID uart0
+#define BAUD_RATE 9600
+#define UART_TX_PIN 0
+#define UART_RX_PIN 1
+
+// Função para inicializar a UART
+void inicializa_uart() {
+    uart_init(UART_ID, BAUD_RATE);
+    gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
+}
+
 
 //  █ █ █▀▀ █▀▀ █▀▄   █▀▀ █▀█ █▀▄ █▀▀   █▀▄ █▀▀ █▀▀ ▀█▀ █▀█
 //  █ █ ▀▀█ █▀▀ █▀▄   █   █ █ █ █ █▀▀   █▀▄ █▀▀ █ █  █  █ █
@@ -55,18 +67,17 @@ void prepareUplink(){
     // Reseta o contador do pluviometro
     pluviometro.contador = 0;
     pluviometro.ultima_contagem = 0;
-        // imprime a mensagem formatada
-    BSF::serial.print(message);
+    
+    // imprime a mensagem formatada
+    uart_puts(UART_ID, message);
+    uart_puts(UART_ID, "\n\r");
 
     strcpy((char*)LMICNode::mydata, message);
     strcpy(message, "");
     LMICNode::sizeData = strlen((char*)LMICNode::mydata);
-    LMICNode::printSpaces(BSF::serial, MESSAGE_INDENT);
-    BSF::serial.print("Mydata: ");
-    BSF::serial.println((char*)LMICNode::mydata);
-    LMICNode::printSpaces(BSF::serial, MESSAGE_INDENT);
-    BSF::serial.print("Sizedata: ");
-    BSF::serial.println(LMICNode::sizeData);
+    uart_puts(UART_ID, "Mydata: ");
+    uart_puts(UART_ID, (char*)LMICNode::mydata);
+    uart_puts(UART_ID, "\n\r");
     LMICNode::fPort = 10;
     LMICNode::scheduleUplink(LMICNode::fPort, LMICNode::mydata, LMICNode::sizeData);
 }
@@ -91,9 +102,10 @@ void setup() {
     //  █ █ █▀▀ █▀▀ █▀▄   █▀▀ █▀█ █▀▄ █▀▀   █▀▄ █▀▀ █▀▀ ▀█▀ █▀█
     //  █ █ ▀▀█ █▀▀ █▀▄   █   █ █ █ █ █▀▀   █▀▄ █▀▀ █ █  █  █ █
     //  ▀▀▀ ▀▀▀ ▀▀▀ ▀ ▀   ▀▀▀ ▀▀▀ ▀▀  ▀▀▀   ▀▀  ▀▀▀ ▀▀▀ ▀▀▀ ▀ ▀
-
+    inicializa_uart();
     inicializa_sensor_pluviometro(&pluviometro);
     _gpio_init(DHT_PIN);
+    uart_puts(UART_ID, "Sistema iniciado\n\r");
 
     // Place code for initializing sensors etc. here.
 
